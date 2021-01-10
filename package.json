@@ -15,5 +15,13 @@
   "bugs": {
     "url": "https://github.com/missxiaolin/vue-scource/issues"
   },
-  "homepage": "https://github.com/missxiaolin/vue-scource#readme"
+  "homepage": "https://github.com/missxiaolin/vue-scource#readme",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "cross-env": "^7.0.3",
+    "rollup": "^2.36.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-serve": "^1.1.0"
+  }
 }
