@@ -9,10 +9,19 @@
     <div id="app"></div>
     <script src="../dist/umd/vue.js"></script>
 
-    <!-- <script>
+    <script>
         let vm = new Vue({
-            el: '#app'
+            el: '#app',
+            data() {
+                return {
+                    name: '测试'
+                }
+            },
+            computed() {
+
+            }
         })
-    </script> -->
+        console.log(vm)
+    </script>
 </body>
 </html>
