@@ -49,20 +49,88 @@
   function isObject(data) {
     return _typeof(data) === 'object' && data !== null;
   }
+  /**
+   * 
+   * @param {*} data 
+   * @param {*} key 
+   * @param {*} value 
+   */
+
+  function def(data, key, value) {
+    Object.defineProperty(data, key, {
+      enumerable: false,
+      configurable: false,
+      value: value
+    });
+  }
+
+  var oldArrayMethods = Array.prototype;
+  var arrayMethods = Object.create(oldArrayMethods);
+  var methteds = ['push', 'shift', 'unshift', 'pop', 'sort', 'splice', 'reverser'];
+  methteds.forEach(function (methed) {
+    arrayMethods[methed] = function () {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      var result = oldArrayMethods[methed].apply(this, args); // 调用原生数组方法
+
+      var inserted; // 当前元素
+
+      var ob = this.__ob__;
+
+      switch (methed) {
+        case 'push':
+        case 'unshift':
+          inserted = args;
+          break;
+
+        case 'splice':
+          inserted = args.splice(2);
+          break;
+      }
+
+      if (inserted) ob.observerArray(inserted); // 将新增熟悉继续观测
+
+      return result;
+    };
+  });
 
   var Observer = /*#__PURE__*/function () {
     function Observer(value) {
       _classCallCheck(this, Observer);
 
-      this.walk(value);
+      // value.__ob__ = this
+      def(value, '__ob__', this);
+
+      if (Array.isArray(value)) {
+        // 如果是数据的话不会对索引进行观测 性能问题
+        value.__proto__ = arrayMethods; // 如果数据是对象监控
+
+        this.observerArray(value);
+      } else {
+        this.walk(value);
+      }
     }
     /**
      * 
-     * @param {*} data 
+     * @param {*} value 
      */
 
 
     _createClass(Observer, [{
+      key: "observerArray",
+      value: function observerArray(value) {
+        for (var i = 0; i < value.length; i++) {
+          observe(value[i]);
+        }
+      }
+      /**
+       * 
+       * @param {*} data 
+       */
+
+    }, {
       key: "walk",
       value: function walk(data) {
         var keys = Object.keys(data);
@@ -85,6 +153,8 @@
   function defineReactive(data, key, value) {
     observe(value);
     Object.defineProperty(data, key, {
+      configurable: true,
+      enumerable: false,
       get: function get() {
         return value;
       },
