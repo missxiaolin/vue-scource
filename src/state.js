@@ -1,3 +1,5 @@
+import { observe } from './observe/index'
+
 export function initState(vm) {
     const opts = vm.$options;
     if (opts.props) {
@@ -22,7 +24,7 @@ function initProps() {
 }
 
 function initMethods() {
-    
+
 }
 
 /**
@@ -38,10 +40,10 @@ function initData(vm) {
 
 
 function initComputed() {
-    
+
 }
 
 
 function initWatch() {
-    
+
 }
