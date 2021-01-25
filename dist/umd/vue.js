@@ -42,6 +42,62 @@
     return Constructor;
   }
 
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+  }
+
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
+  function _iterableToArrayLimit(arr, i) {
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
   /**
    * 判断是会否是对象
    * @param {*} data 
@@ -339,12 +395,121 @@
     return root;
   }
 
-  // ast 语法树
-  function compileToFunction(template) {
-    var rendor = parseHTML(template);
-    console.log(rendor);
-    return function render() {};
+  var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
+
+  function genProps(attrs) {
+    // 处理属性 拼接成属性的字符串
+    var str = '';
+
+    for (var i = 0; i < attrs.length; i++) {
+      var attr = attrs[i];
+
+      if (attr.name === 'style') {
+        (function () {
+          // style="color: red;fontSize:14px" => {style:{color:'red'},id:name,}
+          var obj = {};
+          attr.value.split(';').forEach(function (item) {
+            var _item$split = item.split(':'),
+                _item$split2 = _slicedToArray(_item$split, 2),
+                key = _item$split2[0],
+                value = _item$split2[1];
+
+            obj[key] = value;
+          });
+          attr.value = obj;
+        })();
+      }
+
+      str += "".concat(attr.name, ":").concat(JSON.stringify(attr.value), ",");
+    }
+
+    return "{".concat(str.slice(0, -1), "}");
   }
+
+  function genChildren(el) {
+    var children = el.children;
+
+    if (children && children.length > 0) {
+      return "".concat(children.map(function (c) {
+        return gen(c);
+      }).join(','));
+    } else {
+      return false;
+    }
+  }
+
+  function gen(node) {
+    if (node.type == 1) {
+      // 元素标签
+      return generate(node);
+    } else {
+      var text = node.text; //   <div>a {{  name  }} b{{age}} c</div>
+
+      var tokens = [];
+      var match, index; // 每次的偏移量 buffer.split()
+
+      var lastIndex = defaultTagRE.lastIndex = 0; // 只要是全局匹配 就需要将lastIndex每次匹配的时候调到0处
+
+      while (match = defaultTagRE.exec(text)) {
+        index = match.index;
+
+        if (index > lastIndex) {
+          tokens.push(JSON.stringify(text.slice(lastIndex, index)));
+        }
+
+        tokens.push("_s(".concat(match[1].trim(), ")"));
+        lastIndex = index + match[0].length;
+      }
+
+      if (lastIndex < text.length) {
+        tokens.push(JSON.stringify(text.slice(lastIndex)));
+      }
+
+      return "_v(".concat(tokens.join('+'), ")");
+    }
+  }
+
+  function generate(el) {
+    // [{name:'id',value:'app'},{}]  {id:app,a:1,b:2}
+    var children = genChildren(el);
+    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs.length ? genProps(el.attrs) : 'undefined').concat(children ? ",".concat(children) : '', ")\n    ");
+    return code;
+  }
+
+  function compileToFunction(template) {
+    // 1) 解析html字符串 将html字符串 => ast语法树
+    var root = parseHTML(template); // 需要将ast语法树生成最终的render函数  就是字符串拼接 （模板引擎）
+
+    var code = generate(root); // 核心思路就是将模板转化成 下面这段字符串
+    //  <div id="app"><p>hello {{name}}</p> hello</div>
+    // 将ast树 再次转化成js的语法
+    //  _c("div",{id:app},_c("p",undefined,_v('hello' + _s(name) )),_v('hello'))
+    // 所有的模板引擎实现 都需要new Function + with
+
+    var renderFn = new Function("with(this){ return ".concat(code, "}")); // vue的render 他返回的是虚拟dom
+
+    return renderFn;
+  } //   hellpo
+  //      <p></p>
+  // </div>
+  // let root = {
+  //     tag:'div',
+  //     attrs:[{name:'id',value:'app'}],
+  //     parent:null,
+  //     type:1,
+  //     children:[{
+  //         tag:'p',
+  //         attrs:[],
+  //         parent:root,
+  //         type:1,
+  //         children:[
+  //             {
+  //                 text:'hello',
+  //                 type:3
+  //             }
+  //         ]
+  //     }]
+  // }
 
   function initMixin(Vue) {
     // 初始化流程
