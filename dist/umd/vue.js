@@ -119,6 +119,23 @@
       value: value
     });
   }
+  /**
+  * 代理
+  * @param {*} vm 
+  * @param {*} source 
+  * @param {*} key 
+  */
+
+  function proxy(vm, source, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[source][key];
+      },
+      set: function set(newValue) {
+        vm[source][key] = newValue;
+      }
+    });
+  }
 
   var oldArrayMethods = Array.prototype;
   var arrayMethods = Object.create(oldArrayMethods);
@@ -252,6 +269,10 @@
   function initData(vm) {
     var data = vm.$options.data;
     data = vm._data = typeof data === 'function' ? data.call(vm) : data; // 对象劫持 Object.definProperty
+
+    for (var key in data) {
+      proxy(vm, '_data', key);
+    }
 
     observe(data);
   }
