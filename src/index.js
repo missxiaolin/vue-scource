@@ -1,4 +1,6 @@
 import { initMixin } from './init'
+import { renderMixin } from './render'
+import { lifecycMixin } from './lifecycle'
 
 // vue 核心代码
 function Vue(options) {
@@ -6,6 +8,8 @@ function Vue(options) {
     this._init(options)
 }
 initMixin(Vue)
+renderMixin(Vue)
+lifecycMixin(Vue)
 
 
 

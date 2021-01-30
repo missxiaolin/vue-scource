@@ -532,6 +532,35 @@
   //     }]
   // }
 
+  /**
+   * 
+   * @param {*} Vue 
+   */
+  function lifecycMixin(Vue) {
+    Vue.prototype._update = function () {};
+  }
+  /**
+   * 
+   * @param {*} vm 
+   * @param {*} el 
+   */
+
+  function mountComponent(vm, el) {
+    var options = vm.$options; // render
+
+    vm.$el = el; // dom
+
+    console.log(options); // 渲染页面
+
+    var updateComponent = function updateComponent() {
+      // 返回虚拟dom
+      vm._update(vm._render());
+    }; // 渲染watcher
+
+
+    new Watcher(vm, updateComponent, function () {}, true);
+  }
+
   function initMixin(Vue) {
     // 初始化流程
     Vue.prototype._init = function (options) {
@@ -561,8 +590,15 @@
           var render = compileToFunction(template);
           options.render = render;
         }
-      }
+      } // 渲染
+
+
+      mountComponent(vm, el);
     };
+  }
+
+  function renderMixin(Vue) {
+    Vue.prototype._render = function () {};
   }
 
   function Vue(options) {
@@ -571,6 +607,8 @@
   }
 
   initMixin(Vue);
+  renderMixin(Vue);
+  lifecycMixin(Vue);
 
   return Vue;
 
