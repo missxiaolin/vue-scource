@@ -227,7 +227,7 @@
     observe(value);
     Object.defineProperty(data, key, {
       configurable: true,
-      enumerable: false,
+      enumerable: true,
       get: function get() {
         return value;
       },
