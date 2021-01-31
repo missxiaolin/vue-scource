@@ -1,4 +1,5 @@
 import Watcher from './observe/watcher'
+import { patch } from './vdom/patch'
 
 /**
  * 
@@ -6,6 +7,9 @@ import Watcher from './observe/watcher'
  */
 export function lifecycMixin(Vue) {
     Vue.prototype._update = function(vnode) {
+        const vm = this
+        // 通过虚拟节点渲染真实dom
+        vm.$el = patch(vm.$el, vnode)
 
     }
 }
