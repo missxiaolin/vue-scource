@@ -1,10 +1,11 @@
+import Watcher from './observe/watcher'
 
 /**
  * 
  * @param {*} Vue 
  */
 export function lifecycMixin(Vue) {
-    Vue.prototype._update = function() {
+    Vue.prototype._update = function(vnode) {
 
     }
 }
@@ -17,7 +18,6 @@ export function lifecycMixin(Vue) {
 export function mountComponent(vm, el) {
     const options = vm.$options // render
     vm.$el = el // dom
-    console.log(options)
     // 渲染页面
     let updateComponent = () => {
         // 返回虚拟dom

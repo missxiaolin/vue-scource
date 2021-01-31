@@ -532,12 +532,35 @@
   //     }]
   // }
 
+  var Watcher = /*#__PURE__*/function () {
+    function Watcher(vm, exprOrFn, callback, options) {
+      _classCallCheck(this, Watcher);
+
+      this.vm = vm;
+      this.callback = callback;
+      this.options = options;
+      this.getter = exprOrFn; // 将内部传过来的回调函数 放到getter属性上
+
+      this.get();
+    }
+
+    _createClass(Watcher, [{
+      key: "get",
+      value: function get() {
+        this.getter();
+      }
+    }]);
+
+    return Watcher;
+  }();
+
   /**
    * 
    * @param {*} Vue 
    */
+
   function lifecycMixin(Vue) {
-    Vue.prototype._update = function () {};
+    Vue.prototype._update = function (vnode) {};
   }
   /**
    * 
@@ -549,8 +572,7 @@
     var options = vm.$options; // render
 
     vm.$el = el; // dom
-
-    console.log(options); // 渲染页面
+    // 渲染页面
 
     var updateComponent = function updateComponent() {
       // 返回虚拟dom
@@ -598,7 +620,24 @@
   }
 
   function renderMixin(Vue) {
-    Vue.prototype._render = function () {};
+    Vue.prototype._c = function () {
+      return createElement.apply(void 0, arguments);
+    };
+
+    Vue.prototype_v = function (text) {
+      return createTextNode(text);
+    };
+
+    Vue.prototype_s = function (val) {
+      return val === null ? '' : _typeof(val) === 'object' ? JSON.stringify(val) : val;
+    };
+
+    Vue.prototype._render = function () {
+      var vm = this;
+      var render = vm.$options.render;
+      console.log(render);
+      render.call(vm);
+    };
   }
 
   function Vue(options) {
