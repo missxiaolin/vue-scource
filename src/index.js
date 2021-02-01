@@ -1,6 +1,7 @@
 import { initMixin } from './init'
 import { renderMixin } from './render'
 import { lifecycMixin } from './lifecycle'
+import { initGlobalAPI } from './initGlobalAPI/index'
 
 // vue 核心代码
 function Vue(options) {
@@ -12,5 +13,6 @@ renderMixin(Vue)
 lifecycMixin(Vue)
 
 
-
+// 初始化全局api
+initGlobalAPI(Vue)
 export default Vue

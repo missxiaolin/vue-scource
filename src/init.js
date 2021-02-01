@@ -1,16 +1,23 @@
 import { initState } from './state'
 import { compileToFunction } from './compiler/index'
-import { mountComponent } from './lifecycle'
+import { mountComponent, callHook } from './lifecycle'
+import { mergeOptions } from './util/index'
 
 export function initMixin(Vue) {
     // 初始化流程
     Vue.prototype._init = function (options) {
         // 数据劫持
         const vm = this
-        vm.$options = options
-        
+
+        // 将用户传递和全局进行合并
+        vm.$options = mergeOptions(vm.constructor.options, options)
+
+        callHook(vm, 'beforeCreate')
+
         // 初始化状态
         initState(vm) // 分割代码
+
+        callHook(vm, 'created')
 
         // 如果用户传入el属性 渲染 
         if (vm.$options.el) {

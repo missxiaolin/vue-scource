@@ -22,6 +22,7 @@ export function lifecycMixin(Vue) {
 export function mountComponent(vm, el) {
     const options = vm.$options // render
     vm.$el = el // dom
+    callHook(vm, 'beforeMount')
     // 渲染页面
     let updateComponent = () => {
         // 返回虚拟dom
@@ -29,5 +30,19 @@ export function mountComponent(vm, el) {
     }
     // 渲染watcher
     new Watcher(vm, updateComponent, () => {}, true)
+    callHook(vm, 'mounted')
+}
 
+/**
+ * 找到对应的钩子依次执行
+ * @param {*} vm 
+ * @param {*} hook 
+ */
+export function callHook(vm, hook) {
+    const handles = vm.$options[hook] // [fn , fn]
+    if (handles) {
+        for (let i = 0; i < handles.length; i++) {
+            handles[i].call(vm)
+        }
+    }
 }
