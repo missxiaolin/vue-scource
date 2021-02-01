@@ -286,11 +286,21 @@
       this.id = id++;
       this.subs = [];
     }
+    /**
+     * 存储watcher
+     * @param {*} watcher 
+     */
+
 
     _createClass(Dep, [{
+      key: "addSub",
+      value: function addSub(watcher) {
+        this.subs.push(watcher); // 观察者模式
+      }
+    }, {
       key: "depend",
       value: function depend() {
-        this.subs.push(Dep.target); // 观察者模式
+        Dep.target.addDep(this);
       }
     }, {
       key: "notify",
@@ -704,10 +714,25 @@
       this.id = id$1++;
       this.getter = exprOrFn; // 将内部传过来的回调函数 放到getter属性上
 
+      this.depsId = new Set(); // 集合
+
+      this.deps = [];
       this.get(); // 调用get 方法会让渲染watcher 执行
     }
 
     _createClass(Watcher, [{
+      key: "addDep",
+      value: function addDep(dep) {
+        // watcher 不能放重复dep dep不能放重复 watcher
+        var id = dep.id;
+
+        if (!this.depsId.has(id)) {
+          this.depsId.add(id);
+          this.deps.push(dep);
+          dep.addSub(this);
+        }
+      }
+    }, {
       key: "get",
       value: function get() {
         pushTarget(this); // 存watcher

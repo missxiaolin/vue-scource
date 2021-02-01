@@ -9,8 +9,16 @@ class Dep {
         this.subs = []
     }
 
+    /**
+     * 存储watcher
+     * @param {*} watcher 
+     */
+    addSub(watcher) {
+        this.subs.push(watcher) // 观察者模式
+    }
+
     depend() {
-        this.subs.push(Dep.target) // 观察者模式
+        Dep.target.addDep(this)
     }
 
     notify() {
