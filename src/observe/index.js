@@ -1,5 +1,6 @@
 import { isObject, def } from '../util/index'
 import { arrayMethods } from './array'
+import Dep from '../observe/dep'
 
 class Observer {
     constructor(value) {
@@ -47,17 +48,22 @@ class Observer {
  * @param {*} value 
  */
 function defineReactive(data, key, value) {
+    let dep = new Dep()
     observe(value)
     Object.defineProperty(data, key, {
         configurable: true,
         enumerable: true,
         get() {
+            if (Dep.target) {
+                dep.depend() // 存watcher
+            }
             return value
         },
         set(newValue) {
             if (newValue === value) return
             observe(newValue)
             value = newValue
+            dep.notify() // 通知依赖watcher执行更新操作
         }
     })
 }

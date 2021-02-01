@@ -277,6 +277,52 @@
     };
   });
 
+  var id = 0;
+
+  var Dep = /*#__PURE__*/function () {
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.id = id++;
+      this.subs = [];
+    }
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        this.subs.push(Dep.target); // 观察者模式
+      }
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          return watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }();
+
+  var stack = [];
+  /**
+   * 存watcher
+   * @param {*} watcher 
+   */
+
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+    stack.push(watcher);
+  }
+  /**
+   * 移除watcher
+   */
+
+  function popTarger() {
+    stack.pop();
+    Dep.target = stack[stack.length - 1];
+  }
+
   var Observer = /*#__PURE__*/function () {
     function Observer(value) {
       _classCallCheck(this, Observer);
@@ -332,17 +378,23 @@
 
 
   function defineReactive(data, key, value) {
+    var dep = new Dep();
     observe(value);
     Object.defineProperty(data, key, {
       configurable: true,
       enumerable: true,
       get: function get() {
+        if (Dep.target) {
+          dep.depend(); // 存watcher
+        }
+
         return value;
       },
       set: function set(newValue) {
         if (newValue === value) return;
         observe(newValue);
         value = newValue;
+        dep.notify(); // 通知依赖watcher执行更新操作
       }
     });
   }
@@ -400,7 +452,7 @@
 
   var currentParent; // 标识当前父亲是谁
 
-  var stack = [];
+  var stack$1 = [];
   var ELEMENT_TYPE = 1;
   var TEXT_TYPE = 3;
 
@@ -424,7 +476,7 @@
 
     currentParent = element; // 把当前元素标记成父ast树
 
-    stack.push(element); // 将开始标签存放到栈中
+    stack$1.push(element); // 将开始标签存放到栈中
   }
 
   function chars(text) {
@@ -439,10 +491,10 @@
   }
 
   function end(tagName) {
-    var element = stack.pop(); // 拿到的是ast对象
+    var element = stack$1.pop(); // 拿到的是ast对象
     // 我要标识当前这个p是属于这个div的儿子的
 
-    currentParent = stack[stack.length - 1];
+    currentParent = stack$1[stack$1.length - 1];
 
     if (currentParent) {
       element.parent = currentParent;
@@ -640,6 +692,8 @@
   //     }]
   // }
 
+  var id$1 = 0;
+
   var Watcher = /*#__PURE__*/function () {
     function Watcher(vm, exprOrFn, callback, options) {
       _classCallCheck(this, Watcher);
@@ -647,15 +701,25 @@
       this.vm = vm;
       this.callback = callback;
       this.options = options;
+      this.id = id$1++;
       this.getter = exprOrFn; // 将内部传过来的回调函数 放到getter属性上
 
-      this.get();
+      this.get(); // 调用get 方法会让渲染watcher 执行
     }
 
     _createClass(Watcher, [{
       key: "get",
       value: function get() {
-        this.getter();
+        pushTarget(this); // 存watcher
+
+        this.getter(); // 渲染watcher 执行
+
+        popTarger(); // 移除watcher
+      }
+    }, {
+      key: "update",
+      value: function update() {
+        this.get();
       }
     }]);
 
