@@ -273,6 +273,8 @@
 
       if (inserted) ob.observerArray(inserted); // 将新增熟悉继续观测
 
+      ob.dep.notify(); //  如果用户调用 push 通知当前dep更新
+
       return result;
     };
   });
@@ -337,7 +339,8 @@
     function Observer(value) {
       _classCallCheck(this, Observer);
 
-      // value.__ob__ = this
+      this.dep = new Dep(); // value.__ob__ = this
+
       def(value, '__ob__', this);
 
       if (Array.isArray(value)) {
@@ -388,14 +391,24 @@
 
 
   function defineReactive(data, key, value) {
-    var dep = new Dep();
-    observe(value);
+    var dep = new Dep(); // 这个value 可能是数组 可能是对象，返回结果是observer 实例 ，当前value对应的observer
+
+    var childOb = observe(value);
     Object.defineProperty(data, key, {
       configurable: true,
       enumerable: true,
       get: function get() {
         if (Dep.target) {
           dep.depend(); // 存watcher
+
+          if (!!childOb) {
+            childOb.dep.depend(); // 收集数组相关依赖
+            // 如果数组还有数组
+
+            if (Array.isArray(value)) {
+              dependArray(value);
+            }
+          }
         }
 
         return value;
@@ -407,6 +420,22 @@
         dep.notify(); // 通知依赖watcher执行更新操作
       }
     });
+  }
+  /**
+   * 递归数组增加监测
+   * @param {*} value 
+   */
+
+
+  function dependArray(value) {
+    for (var i = 0; i < value.length; i++) {
+      var current = value[i];
+      current.__ob__ && current.__ob__.dep.depend();
+
+      if (Array.isArray(current)) {
+        dependArray(current);
+      }
+    }
   }
 
   function observe(data) {
