@@ -731,6 +731,58 @@
   //     }]
   // }
 
+  var callbacks = [];
+  var waiting = false;
+  /**
+   * 执行
+   */
+
+  function flushCallback() {
+    callbacks.forEach(function (c) {
+      return c();
+    });
+    waiting = false;
+  }
+  /**
+   * @param {*} cb 
+   */
+
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (waiting === false) {
+      setTimeout(flushCallback, 0);
+      waiting = true;
+    }
+  }
+
+  var queue = [];
+  var has = {};
+
+  function flushSchedularQueue() {
+    queue.forEach(function (w) {
+      return w.run();
+    });
+    queue = [];
+    has = {};
+  }
+  /**
+   * 队列存储watcher
+   * @param {*} watcher 
+   */
+
+
+  function queueWatcher(watcher) {
+    var id = watcher.id;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true;
+      nextTick(flushSchedularQueue);
+    }
+  }
+
   var id$1 = 0;
 
   var Watcher = /*#__PURE__*/function () {
@@ -786,29 +838,6 @@
 
     return Watcher;
   }();
-
-  var queue = [];
-  var has = {};
-  /**
-   * 队列存储watcher
-   * @param {*} watcher 
-   */
-
-  function queueWatcher(watcher) {
-    var id = watcher.id;
-
-    if (has[id] == null) {
-      queue.push(watcher);
-      has[id] = true;
-      setTimeout(function () {
-        queue.forEach(function (w) {
-          return w.run();
-        });
-        queue = [];
-        has = {};
-      }, 0);
-    }
-  }
 
   function patch(oldVnode, vnode) {
     // 1.判断是更新还是要渲染
@@ -956,7 +985,10 @@
 
 
       mountComponent(vm, el);
-    };
+    }; // 用户调用的next
+
+
+    Vue.prototype.$nextTick = nextTick;
   }
 
   /**

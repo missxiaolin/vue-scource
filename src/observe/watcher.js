@@ -1,4 +1,5 @@
 import { pushTarget, popTarger } from './dep.js'
+import { queueWatcher } from './schedular'
 
 
 let id = 0
@@ -38,26 +39,6 @@ class Watcher {
     run() {
         // 渲染
         this.get()
-    }
-}
-
-let queue = []
-let has = {}
-
-/**
- * 队列存储watcher
- * @param {*} watcher 
- */
-function queueWatcher(watcher) {
-    const id = watcher.id
-    if (has[id] == null) {
-        queue.push(watcher)
-        has[id] = true
-        setTimeout(() => {
-            queue.forEach(w => w.run())
-            queue = []
-            has = {}
-        }, 0)
     }
 }
 
