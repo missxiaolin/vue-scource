@@ -30,7 +30,34 @@ class Watcher {
     }
 
     update() {
+        queueWatcher(this)
+        // 执行渲染
+        // this.get()
+    }
+
+    run() {
+        // 渲染
         this.get()
+    }
+}
+
+let queue = []
+let has = {}
+
+/**
+ * 队列存储watcher
+ * @param {*} watcher 
+ */
+function queueWatcher(watcher) {
+    const id = watcher.id
+    if (has[id] == null) {
+        queue.push(watcher)
+        has[id] = true
+        setTimeout(() => {
+            queue.forEach(w => w.run())
+            queue = []
+            has = {}
+        }, 0)
     }
 }
 

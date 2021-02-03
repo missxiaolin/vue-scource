@@ -773,12 +773,42 @@
     }, {
       key: "update",
       value: function update() {
+        queueWatcher(this); // 执行渲染
+        // this.get()
+      }
+    }, {
+      key: "run",
+      value: function run() {
+        // 渲染
         this.get();
       }
     }]);
 
     return Watcher;
   }();
+
+  var queue = [];
+  var has = {};
+  /**
+   * 队列存储watcher
+   * @param {*} watcher 
+   */
+
+  function queueWatcher(watcher) {
+    var id = watcher.id;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true;
+      setTimeout(function () {
+        queue.forEach(function (w) {
+          return w.run();
+        });
+        queue = [];
+        has = {};
+      }, 0);
+    }
+  }
 
   function patch(oldVnode, vnode) {
     // 1.判断是更新还是要渲染
